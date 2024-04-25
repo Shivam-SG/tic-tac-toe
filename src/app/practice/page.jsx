@@ -44,6 +44,15 @@ export default function Practice() {
       newSquares[computerMove] = "O";
       setSquares(newSquares);
       setXIsNext(true);
+
+    const winner = calculateWinner(newSquares);
+      if (winner === "O") {
+        setScoreO(scoreO + 1);
+      } else if (winner === "X") {
+        setScoreX(scoreX + 1);
+      } else if (winner === null && newSquares.every((square) => square !== null)) {
+        setDraws(draws + 1);
+      }
     }, 500);
   };
 

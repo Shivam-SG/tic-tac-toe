@@ -28,126 +28,97 @@ export default function Practice() {
   const [scoreX, setScoreX] = useState(0);
   const [scoreO, setScoreO] = useState(0);
   const [draws, setDraws] = useState(0);
-  const [winner, setWinner] = useState(null);
 
   const handleClick = (i) => {
-    if (winner || squares[i]) {
+    if (calculateWinner(squares) || squares[i]) {
       return;
     }
 
-    const newSquares = squares.slice();
+    const newSquares = [...squares];
     newSquares[i] = "X";
     setSquares(newSquares);
     setXIsNext(false);
-    if (!calculateWinner(newSquares)) {
-      setTimeout(() => {
-        const computerMove = getComputerMove(newSquares);
-        newSquares[computerMove] = "O";
-        setSquares(newSquares);
-        setXIsNext(true);
-      }, 500);
-    }
+
+    setTimeout(() => {
+      const computerMove = getComputerMove(newSquares);
+      newSquares[computerMove] = "O";
+      setSquares(newSquares);
+      setXIsNext(true);
+    }, 500);
   };
 
   const getComputerMove = (squares) => {
-    let board = squares.slice();
-    const player = "O";
-    const opponent = "X";
-
-    if (calculateWinner(board)) {
-      return -1;
-    }
-
-    let bestMove = -1;
     let bestScore = -Infinity;
+    let bestMove = null;
 
-    for (let i = 0; i < board.length; i++) {
-      if (board[i] === null) {
-        board[i] = player;
-        let score = minimax(board, 0, false);
-        board[i] = null;
+    for (let i = 0; i < squares.length; i++) {
+      if (squares[i] === null) {
+        squares[i] = "O";
+        const score = minimax(squares, 0, false);
+        squares[i] = null;
         if (score > bestScore) {
           bestScore = score;
           bestMove = i;
         }
       }
     }
+
     return bestMove;
   };
 
-  const minimax = (board, depth, isMaximizing) => {
-    if (calculateWinner(board) || depth === 5) {
-      return evaluate(board);
+  const minimax = (squares, depth, isMaximizing) => {
+    const winner = calculateWinner(squares);
+    if (winner) {
+      return winner === "O" ? 10 : -10;
     }
 
-    const player = isMaximizing ? "O" : "X";
-    const opponent = isMaximizing ? "X" : "O";
-    let bestScore = isMaximizing ? -Infinity : Infinity;
+    if (squares.every((square) => square !== null)) {
+      return 0;
+    }
 
-    for (let i = 0; i < board.length; i++) {
-      if (board[i] === null) {
-        board[i] = player;
-        let score = minimax(board, depth + 1, !isMaximizing);
-        board[i] = null;
-        if (isMaximizing) {
-          bestScore = Math.max(bestScore, score);
-        } else {
-          bestScore = Math.min(bestScore, score);
+    if (isMaximizing) {
+      let bestScore = -Infinity;
+      for (let i = 0; i < squares.length; i++) {
+        if (squares[i] === null) {
+          squares[i] = "O";
+          const score = minimax(squares, depth + 1, false);
+          squares[i] = null;
+          bestScore = Math.max(score, bestScore);
         }
       }
-    }
-    return bestScore;
-  };
-
-  const evaluate = (board) => {
-    const lines = [
-      [0, 1, 2],
-      [3, 4, 5],
-      [6, 7, 8],
-      [0, 3, 6],
-      [1, 4, 7],
-      [2, 5, 8],
-      [0, 4, 8],
-      [2, 4, 6],
-    ];
-
-    const winner = calculateWinner(board);
-
-    if (winner === "O") {
-      return 10;
-    } else if (winner === "X") {
-      return -10;
+      return bestScore;
     } else {
-      return 0;
+      let bestScore = Infinity;
+      for (let i = 0; i < squares.length; i++) {
+        if (squares[i] === null) {
+          squares[i] = "X";
+          const score = minimax(squares, depth + 1, true);
+          squares[i] = null;
+          bestScore = Math.min(score, bestScore);
+        }
+      }
+      return bestScore;
     }
   };
 
   const resetGame = () => {
     setSquares(Array(9).fill(null));
     setXIsNext(true);
-    setWinner(null);
   };
 
   useEffect(() => {
-    const calculatedWinner = calculateWinner(squares);
-    if (calculatedWinner) {
-      setWinner(calculatedWinner);
-      updateScore(calculatedWinner);
+    const winner = calculateWinner(squares);
+    if (winner) {
+      if (winner === "X") {
+        setScoreX(scoreX + 1);
+      } else if (winner === "O") {
+        setScoreO(scoreO + 1);
+      }
     } else if (squares.every((square) => square !== null)) {
-      setWinner(null);
-      updateScore(null);
+      setDraws(draws + 1);
     }
   }, [squares]);
 
-  const updateScore = (calculatedWinner) => {
-    if (calculatedWinner === "X") {
-      setScoreX(scoreX + 1);
-    } else if (calculatedWinner === "O") {
-      setScoreO(scoreO + 1);
-    } else {
-      setDraws(draws + 1);
-    }
-  };
   return (
     <div className="grid justify-center m-10">
       <h1 className="text-center mt-10 font-bold text-4xl text-blue-700 mb-6">
